@@ -59,4 +59,9 @@ app.post('/login', async (req, res) => {
     });
 });
 
+app.get('/logout', (req, res) => {
+    res.cookie("token", "").send("Logged out");
+    res.redirect('/login');
+});
+
 app.listen(3001);
