@@ -15,6 +15,9 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
+app.get('/login', (req, res) => {
+    res.render('login');
+});
 
 app.post('/register', async (req, res) => {
     let {name, username, age, email, password} = req.body;
@@ -42,5 +45,18 @@ app.post('/register', async (req, res) => {
     });
 });
 
+app.post('/login', async (req, res) => {
+    let {email, password} = req.body;
+
+    let user = await userModel.findOne({email});
+    if(!user){
+        return res.status(500).send("Something went wrong");
+    }
+
+    bcrypt.compare(password, user.password, (err, result) => {
+        if(result) res.status(200).send("Login successful");
+        else res.render("/login", {message: "Invalid credentials"})
+    });
+});
 
 app.listen(3001);
