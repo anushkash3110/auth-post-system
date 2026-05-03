@@ -19,6 +19,11 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
+app.get('/profile', isLoggedIn, async (req, res) => { 
+    console.log(req.user);
+    res.render("login");
+});
+
 app.post('/register', async (req, res) => {
     let {name, username, age, email, password} = req.body;
 
@@ -54,14 +59,34 @@ app.post('/login', async (req, res) => {
     }
 
     bcrypt.compare(password, user.password, (err, result) => {
-        if(result) res.status(200).send("Login successful");
-        else res.render("/login", {message: "Invalid credentials"})
+        if(result){
+            let token = jwt.sign({email: email, userid: user._id}, "shhhh");
+            res.cookie("token", token);
+            res.status(200).send("Login successful");
+        }
+        else res.render("login", {message: "Invalid credentials"})
     });
 });
 
 app.get('/logout', (req, res) => {
-    res.cookie("token", "").send("Logged out");
+    res.cookie("token", "");
     res.redirect('/login');
 });
+
+function isLoggedIn(req, res, next){
+
+    console.log(req.cookies);
+    
+    if(req.cookies.token === "") {
+        return res.send("You must be logged in");
+    }
+    else{
+        let data = jwt.verify(req.cookies.token, "shhhh");
+        console.log(data);
+        req.user = data;
+
+        next();
+    }
+}
 
 app.listen(3001);
