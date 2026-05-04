@@ -5,25 +5,45 @@ const postModel = require("./models/post");
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+
 app.get('/', (req, res) => {
     res.render('index');
 });
+
 
 app.get('/login', (req, res) => {
     res.render('login');
 });
 
+
 app.get('/profile', isLoggedIn, async (req, res) => { 
-    let user = await userModel.findOne({email: req.user.email});
-    console.log(user);
+    let user = await userModel.findOne({email: req.user.email}).populate("posts") ;
     res.render("profile", {user});
 });
+
+
+app.post('/post', isLoggedIn, async (req, res) => { 
+    let user = await userModel.findOne({email: req.user.email});
+    let {content} = req.body;
+
+    let post = await postModel.create({
+        user: user._id,
+        content
+    });
+
+    user.posts.push(post._id);
+    await user.save();
+
+    res.redirect('/profile');
+});
+
 
 app.post('/register', async (req, res) => {
     let {name, username, age, email, password} = req.body;
@@ -51,6 +71,7 @@ app.post('/register', async (req, res) => {
     });
 });
 
+
 app.post('/login', async (req, res) => {
     let {email, password} = req.body;
 
@@ -65,29 +86,31 @@ app.post('/login', async (req, res) => {
             res.cookie("token", token);
             res.status(200).redirect("/profile");
         }
-        else res.render("login", {message: "Invalid credentials"})
+        else {
+            res.render("login", {message: "Invalid credentials"})
+        }
     });
 });
+
 
 app.get('/logout', (req, res) => {
     res.cookie("token", "");
     res.redirect('/login');
 });
 
-function isLoggedIn(req, res, next){
 
-    console.log(req.cookies);
-    
-     if(!req.cookies.token){
-      return res.redirect("/login");
+function isLoggedIn(req, res, next) {
+    if (!req.cookies.token || req.cookies.token === "") {
+        return res.redirect("/login");
     }
-    else{
+    try {
         let data = jwt.verify(req.cookies.token, "shhhh");
-        console.log(data);
         req.user = data;
-
         next();
+    } catch (err) {
+        res.cookie("token", "");
+        return res.redirect("/login");
     }
 }
 
-app.listen(3001);
+app.listen(3001, () => console.log("Server running on http://localhost:3001"));
