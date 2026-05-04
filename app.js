@@ -20,8 +20,9 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/profile', isLoggedIn, async (req, res) => { 
-    console.log(req.user);
-    res.render("login");
+    let user = await userModel.findOne({email: req.user.email});
+    console.log(user);
+    res.render("profile", {user});
 });
 
 app.post('/register', async (req, res) => {
@@ -62,7 +63,7 @@ app.post('/login', async (req, res) => {
         if(result){
             let token = jwt.sign({email: email, userid: user._id}, "shhhh");
             res.cookie("token", token);
-            res.status(200).send("Login successful");
+            res.status(200).redirect("/profile");
         }
         else res.render("login", {message: "Invalid credentials"})
     });
@@ -77,8 +78,8 @@ function isLoggedIn(req, res, next){
 
     console.log(req.cookies);
     
-    if(req.cookies.token === "") {
-        return res.send("You must be logged in");
+     if(!req.cookies.token){
+      return res.redirect("/login");
     }
     else{
         let data = jwt.verify(req.cookies.token, "shhhh");
