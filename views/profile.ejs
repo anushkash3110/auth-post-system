@@ -13,7 +13,10 @@
         </div>
 
         <div class="flex items-start gap-3">
-             <div class="w-10 h-10 bg-red-500 rounded-md"> </div>
+             <div class="w-10 h-10 rounded-md overflow-hidden"> 
+                <img class="w-full h-full object-cover rounded-md" src="./public/images/upload/<%= user.profilepic %>" alt="">
+             </div>
+             
         <h3 class="text-lg text-gray-300 px-2">Welcome to your profile,<span> <%= user.name %> !</span></h3>
         </div>
 
